@@ -22,7 +22,7 @@ def check():
         r = requests.get(url, headers=headers, timeout=25)
         # لو الجملة دي مش موجودة يبقى المواعيد فتحت
         if "لا توجد حاليا مواعيد متاحة" not in r.text:
-            msg = "🚨 AUSTRIA AVAILABLE! 🚨\n\n🇦🇹 مواعيد النمسا فتحت يا محمود!\n🔔 ادخل احجز فوراً فوراً قبل ما تخلص!"
+            msg = "🚨 AUSTRIA AVAILABLE! 🚨\n\n🇦🇹 مواعيد النمسا فتحت يا مصطفى!\n🔔 ادخل احجز فوراً فوراً قبل ما تخلص!"
             send_alert(msg)
             return True
         else:
