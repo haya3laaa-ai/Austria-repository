@@ -1,26 +1,21 @@
 name: Austria 60s Checker
-
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 * * * *' # هيشتغل مرة كل ساعة ويقوم بعملية فحص مستمرة جوه الساعة دي
-
+    - cron: '0 * * * *'
 jobs:
   check:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install selenium webdriver-manager requests
-
-      - name: Run Austria Script
+      - name: Run script
         run: python austria.py
