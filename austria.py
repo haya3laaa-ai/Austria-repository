@@ -2,69 +2,44 @@ import time
 import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import Select
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
-
+# --- إعداداتك ---
 TOKEN = "8366351345:AAHhuaBH5dLwtAXzPQH2Wm6XtgcMjbUmxw4"
-
-CHAT_ID = "7943267388" 
+CHAT_ID = "7943267388"
+URL_TO_CHECK = "https://www.google.com" # استبدل ده برابط المواعيد الحقيقي
 
 def send_telegram(message):
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-    payload = {"chat_id": CHAT_ID, "text": message}
+    requests.post(url, json={"chat_id": CHAT_ID, "text": message})
+
+chrome_options = Options()
+chrome_options.add_argument("--headless")
+chrome_options.add_argument("--no-sandbox")
+chrome_options.add_argument("--disable-dev-shm-usage")
+
+service = Service(ChromeDriverManager().install())
+driver = webdriver.Chrome(service=service, options=chrome_options)
+
+start_time = time.time()
+# هيشتغل لمدة 55 دقيقة (عشان ميتخطاش وقت جيت هاب المسموح)
+while (time.time() - start_time) < 3300: 
     try:
-        requests.post(url, data=payload)
-    except Exception as e:
-        print(f"Error sending to Telegram: {e}")
-
-
-options = Options()
-options.add_argument("--no-sandbox")
-options.add_argument("--disable-dev-shm-usage")
-options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-
-
-
-def check_appointments():
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-    try:
-        print(f"[{time.strftime('%H:%M:%S')}] جاري فحص المواعيد...")
-        driver.get("https://appointment.bmeia.gv.at/")
-        time.sleep(5)
-
-       
-        office_select = Select(driver.find_element(By.ID, "Office"))
-        office_select.select_by_visible_text("Kairo")
-        driver.find_element(By.ID, "buttonNext").click()
-        time.sleep(3)
-
-       
-        appointment_type = Select(driver.find_element(By.ID, "CalendarId"))
-        appointment_type.select_by_index(1) 
-        driver.find_element(By.ID, "buttonNext").click()
-        time.sleep(5)
-
-    
-        page_text = driver.page_source
-       
-        no_slots_keywords = ["Keine Termine verfügbar", "No appointments available", "لا توجد مواعيد"]
+        driver.get(URL_TO_CHECK)
+        time.sleep(5) # استراحة بسيطة لتحميل الصفحة
         
-        found = True
-        for word in no_slots_keywords:
-            if word in page_text:
-                found = False
-                break
-        
-        if found:
-            send_telegram(" إنذار عاجل: ظهرت مواعيد في سفارة النمسا! ادخل احجز الآن فوراً!")
-            print("!!! تم العثور على موعد !!!")
+        # المنطق: لو كلمة "Available" أو "موعد" ظهرت
+        if "Available" in driver.page_source or "موعد" in driver.page_source:
+            send_telegram("🔔 الحق! المواعيد ظهرت دلوقتي!")
+            print("🚨 مواعيد متاحة!")
         else:
-            print("لا توجد مواعيد متاحة حالياً.")
-
+            print(f"[{time.strftime('%H:%M:%S')}] لا يوجد مواعيد...")
+            
     except Exception as e:
-        print(f"حدث خطأ أثناء الفحص: {e}")
-    finally:
-        driver.quit()
+        print(f"خطأ: {e}")
+    
+    time.sleep(60) # انتظر دقيقة قبل الفحص الجاي
+
+driver.quit()
+
